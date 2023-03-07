@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from sqlalchemy import Column, String, DateTime, Integer, ForeignKey
+from asyncpg import exceptions
+from sqlalchemy import Column, String, DateTime, Integer, ForeignKey, TEXT, ARRAY
 from sqlalchemy import update as sqlalchemy_update
 from sqlalchemy.future import select
 from sqlalchemy.orm import relationship
@@ -15,11 +16,20 @@ class AbstractClass:
     __tablename__ = 'tablename'
 
     @classmethod
-    async def create(cls, **kwargs):
+    async def commit(cls):
+        db.commit()
+
+    @classmethod
+    async def rollback(cls):
+        db.rollback()
+
+    @classmethod
+    async def create(cls, commit=True, **kwargs):
         object = cls(**kwargs)
         db.add(object)
         try:
-            await db.commit()
+            if commit:
+                await db.commit()
         except Exception:
             await db.rollback()
             raise
@@ -84,21 +94,44 @@ class User(CreatedModel):
     lang = Column(String(5), default='en')
     created_at = Column(DateTime, index=True, default=datetime.utcnow)
 
-    author = relationship('Theme', back_populates='theme')
+    theme = relationship('Theme', back_populates='author')
 
     def __repr__(self):
         return self.first_name + ' ' + self.last_name
 
 
+
 class Theme(CreatedModel):
+    _status = {
+        'MIX': 'MIX',
+        'NOT MIX': 'NOT MIX',
+        'QUESTIONS': 'QUESTIONS',
+        'ANSWERS': 'ANSWERS'
+    }
+
     __tablename__ = 'themes'
     id = Column(Integer, autoincrement=True, primary_key=True)
     name = Column(String(50))
-    author_id = Column(Integer, ForeignKey('users.id'))
+    author_id = Column(String, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    created_at = Column(DateTime, default=datetime.now())
+    status = Column(String)
 
-    theme = relationship('User', back_populates='author')
 
-# class Test(CreatedModel):
-#     id = Column(Integer, autoincrement=True, primary_key=True)
-#
-#     pass
+    author = relationship('User', back_populates='theme')
+    tests = relationship('Test', back_populates='theme')
+
+    @classmethod
+    async def create(cls, commit=True, **kwargs):
+        print()
+        return await super().create(commit, **kwargs)
+
+
+class Test(CreatedModel):
+    __tablename__ = 'tests'
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    question = Column(TEXT)
+    options = Column(ARRAY(String))
+    answer = Column(Integer)
+    theme_id = Column(Integer, ForeignKey('themes.id', ondelete='CASCADE'))
+
+    theme = relationship('Theme', back_populates='tests')

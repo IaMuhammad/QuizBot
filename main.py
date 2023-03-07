@@ -3,9 +3,9 @@ import logging
 from aiogram import executor, types
 
 from database.models import User
-from keyboards.inline.keyboard import lang_inline_keyboard
-from keyboards.keyboards.main_keyboard import main_kb
-from loader import dp, bot
+from keyboards.inline_keyboard import lang_inline_keyboard
+from keyboards.main_keyboard import main_kb
+from loader import dp
 from variables.variables import var_greetings
 import handlers
 
