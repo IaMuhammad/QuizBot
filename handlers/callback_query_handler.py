@@ -5,7 +5,7 @@ from database.models import User
 from keyboards.main_keyboard import main_kb
 from loader import dp, bot
 from states import SettingsState
-from variables.variables import var_language_code, var_succesful_edit_lang
+from variables.variables import var_language_code, var_succesful_edit_lang, var_greetings
 
 
 @dp.callback_query_handler(lambda callback_query: var_language_code.get(callback_query.data))
@@ -18,6 +18,7 @@ async def choose_lang(callback_query: CallbackQuery):
     message_id = callback_query.message.message_id
     chat_id = callback_query.message.chat.id
     await bot.delete_message(chat_id=chat_id, message_id=message_id)
+    await bot.send_message(chat_id, var_greetings.get(user.lang), reply_markup=main_kb(user))
 
 
 @dp.callback_query_handler(lambda callback_query: var_language_code.get(callback_query.data), state=SettingsState.lang)

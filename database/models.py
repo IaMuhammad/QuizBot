@@ -100,30 +100,18 @@ class User(CreatedModel):
         return self.first_name + ' ' + self.last_name
 
 
-
 class Theme(CreatedModel):
-    _status = {
-        'MIX': 'MIX',
-        'NOT MIX': 'NOT MIX',
-        'QUESTIONS': 'QUESTIONS',
-        'ANSWERS': 'ANSWERS'
-    }
 
     __tablename__ = 'themes'
     id = Column(Integer, autoincrement=True, primary_key=True)
-    name = Column(String(50))
+    name = Column(String)
     author_id = Column(String, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     created_at = Column(DateTime, default=datetime.now())
-    status = Column(String)
-
+    status = Column(String, default='NOT MIX')
+    time = Column(String, nullable=True)
 
     author = relationship('User', back_populates='theme')
     tests = relationship('Test', back_populates='theme')
-
-    @classmethod
-    async def create(cls, commit=True, **kwargs):
-        print()
-        return await super().create(commit, **kwargs)
 
 
 class Test(CreatedModel):
